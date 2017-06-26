@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/ic_launcher"/>
+    <TextView
+        android:id="@+id/pairData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:text="Loading..."
+        android:textSize="15sp"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/addAlert"
+        android:layout_alignBottom="@+id/addAlert"
+        android:layout_toRightOf="@+id/icon"
+        android:layout_toEndOf="@+id/icon" />
+
+    <Button
+        android:id="@+id/addAlert"
+        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:background="@mipmap/ic_alert"
+        android:layout_toLeftOf="@+id/deletePair"
+        android:layout_toStartOf="@+id/deletePair"/>
+
+    <Button
+        android:id="@+id/deletePair"
+        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:background="@drawable/ic_close"
+        android:layout_alignParentRight="true"/>
+
+</RelativeLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"/>
+</LinearLayout>

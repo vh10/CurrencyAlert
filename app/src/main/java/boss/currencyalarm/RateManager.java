@@ -1,21 +1,32 @@
 package boss.currencyalarm;
 
+import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
 
 public class RateManager {
-    Map<String, Double> rates = new TreeMap<>();
-    DataManager pairData;
+    private Map<String, Double> rates = new TreeMap<>();
+    private long lastUpdated;
+    private int UI = 1;
+    private DataManager pairData;
+    SchedulingService service;
+
+    public RateManager() {
+        rates.put("USD", 1.0);
+        UI = 0;
+    }
 
     public RateManager(DataManager pa) {
         rates.put("USD", 1.0);
@@ -23,16 +34,18 @@ public class RateManager {
         pairData = pa;
     }
 
-    private void add(String el) {
-        if(!rates.keySet().contains(el) && !el.equals("USD"))
-            rates.put(el, 0.0);
+    public void updateRates() {
+        if(UI == 1) {
+            lastUpdated = System.currentTimeMillis();
+            TextView lastU = (TextView) ((Activity) (pairData.context)).findViewById(R.id.lastUpdatedTime);
+            lastU.setText("Last Updated: " + DateFormat.getDateTimeInstance().format(new Date()));
+        }
+
+        new UpdateDataTask().execute(1);
     }
 
-    public void updateRates() {
-        for(PairData i : pairData.x) {
-            add(i.el1);
-            add(i.el2);
-        }
+    void updateRates(SchedulingService a) {
+        service = a;
 
         new UpdateDataTask().execute(1);
     }
@@ -42,7 +55,7 @@ public class RateManager {
         protected String doInBackground(Integer... nr) {
             String response = "er";
 
-            String Url = "https://forex.1forge.com/1.0.1/quotes?" + getPairs(pairData.x);
+            String Url = "https://forex.1forge.com/1.0.1/quotes?" + getPairs();
 
             InputStream stream;
             HttpsURLConnection connection;
@@ -51,7 +64,7 @@ public class RateManager {
 
                 connection = (HttpsURLConnection) url.openConnection();
                 connection.setReadTimeout(3000);
-                connection.setConnectTimeout(3000);
+                connection.setConnectTimeout(7000);
                 connection.setRequestMethod("GET");
                 // Already true by default but setting just in case; needs to be true since this request
                 // is carrying an input (response) body.
@@ -80,19 +93,23 @@ public class RateManager {
             return response;
         }
 
-        String getPairs(ArrayList<PairData> pairs) {
+        String getPairs() {
             String url = "pairs=";
 
-            for(String el : rates.keySet()) if(!el.equals("USD")) {
-                url = url + "USD" + el + ",";
+            for(int i = 0; i < CurrencyRates.currency.size(); ++i) {
+                if (!CurrencyRates.currency.get(i).equals("USD"))
+                    url = url + "USD" + CurrencyRates.currency.get(i) + ",";
             }
 
-            return url.substring(0, url.length() - 1);
+            return url.substring(0, url.length() - 1) + "&api_key=YDetohQ80tzgXGnwJEwDHXKcSh2dc4hu";
         }
 
         @Override
         protected void onPostExecute(String response) {
-            changeData(response);
+            updateStoredRates(response);
+
+            if(UI == 1)
+                changeDisplayData();
         }
     }
 
@@ -122,16 +139,22 @@ public class RateManager {
         return result;
     }
 
-    void changeData(String response) {
+    private void updateStoredRates(String response) {
+        if(response.equals("er")) {
+            // error message
+            return;
+        }
+
         int pos = 0;
 
-        Log.e("res", response);
+        Log.e("aaa", response);
 
-        for(int i = 1; i < rates.keySet().size(); ++i) {
+        for(int i = 1; i < CurrencyRates.currency.size() - 1; ++i) {
             String cu = "";
             while(response.charAt(pos) != 'U')
                 ++pos;
             pos += 3;
+
             while(response.charAt(pos) != '"') {
                 cu = cu + response.charAt(pos);
                 ++pos;
@@ -157,10 +180,11 @@ public class RateManager {
             pos += siz;
         }
 
-        changeDisplayData();
+        if(service != null)
+            service.onUpdateCompleted();
     }
 
-    void changeDisplayData() {
+    private void changeDisplayData() {
         for(PairData i : pairData.x) {
             i.rate = getRate(i.el1, i.el2);
             i.displayData();

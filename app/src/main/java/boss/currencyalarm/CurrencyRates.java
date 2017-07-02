@@ -77,13 +77,13 @@ public class CurrencyRates extends AppCompatActivity {
                 dialog.setTitle("Add new currency pair");
 
                 currency1 = (Spinner)dialog.findViewById(R.id.currency11);
-                currency2 = (Spinner)dialog.findViewById(R.id.currency22);
                 currency1.setAdapter(new CurrencyAdapter(context, R.layout.currency_select, currency));
+
+                currency2 = (Spinner)dialog.findViewById(R.id.currency22);
                 currency2.setAdapter(new CurrencyAdapter(context, R.layout.currency_select, currency));
+                currency2.setSelection(1);
 
                 Button okButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
-                Button cancelButton = (Button) dialog.findViewById(R.id.dialogButtonCancel);
-
                 okButton.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -93,6 +93,7 @@ public class CurrencyRates extends AppCompatActivity {
                     }
                 });
 
+                Button cancelButton = (Button) dialog.findViewById(R.id.dialogButtonCancel);
                 cancelButton.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -114,14 +115,15 @@ public class CurrencyRates extends AppCompatActivity {
 
         String[] items = csvList.split(",");
 
-        for(int i=0; i < items.length; i += 2)
-            pairData.add(items[i], items[i + 1]);
+        for(int i=0; i < items.length; i += 3) {
+            pairData.add(items[i], items[i + 1], Double.parseDouble(items[i + 2]));
+        }
 
         rateManager.updateRates();
     }
 
     @Override
-    public void onPause() {
+    public void onPause() {  // TODO ADD ALARM RATES TO SAVED DATA
         super.onPause();
 
         if(pairData.size() == 0)
@@ -131,6 +133,7 @@ public class CurrencyRates extends AppCompatActivity {
         for(PairData i : pairData.x) {
             list.add(i.el1);
             list.add(i.el2);
+            list.add("" + i.alarmRate);
         }
 
         StringBuilder csvList = new StringBuilder();
@@ -166,7 +169,6 @@ public class CurrencyRates extends AppCompatActivity {
         }
 
         public View getCustomView(int position, View convertView, ViewGroup parent) {
-//TODO ADD ICONS
             LayoutInflater inflater=getLayoutInflater();
             View row=inflater.inflate(R.layout.currency_select, parent, false);
             TextView label=(TextView)row.findViewById(R.id.currency);
@@ -174,12 +176,9 @@ public class CurrencyRates extends AppCompatActivity {
 
             ImageView icon=(ImageView)row.findViewById(R.id.icon);
 
-            String name = elem.get(position);
-            if(position == 0) {
-                name = "ic_statistics";
-                int id = getResources().getIdentifier(name, "drawable", getPackageName());
-                icon.setImageResource(id);
-            }
+            String name = "flag_" + elem.get(position).toLowerCase();
+            int id = getResources().getIdentifier(name, "mipmap", getPackageName());
+            icon.setImageResource(id);
 
             return row;
         }
@@ -197,7 +196,7 @@ public class CurrencyRates extends AppCompatActivity {
             }
         }
 
-        pairData.add(n1, n2);
+        pairData.add(n1, n2, 0);
         rateManager.updateRates();
     }
 

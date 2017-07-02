@@ -1,25 +1,32 @@
 package boss.currencyalarm;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
 public class DataManager {
     ArrayList<PairData> x = new ArrayList<>();
-    LinearLayout content;
-    Context context;
+    private LinearLayout content;
+    public Context context;
+
+    private AlarmService alarmService;
+
+    private static int CHANGE_RATE = 500;
 
     DataManager(Context co, LinearLayout lay) {
         content = lay;
         context = co;
     }
 
-    public void add(String a, String b) {
+    public void add(String a, String b, double alarmRate) {
         View child = LayoutInflater.from(context).inflate(R.layout.pair_data, null);
         content.addView(child);
 
@@ -29,10 +36,20 @@ public class DataManager {
         delSetOnClick(del, x.get(x.size() - 1));
 
         Button addAlert = (Button) child.findViewById(R.id.addAlert);
-        alertClick(addAlert, x.get(x.size() - 1));
+        alertClick(addAlert, x.get(x.size() - 1), alarmRate);
+
+        ImageView icon1 = (ImageView) child.findViewById(R.id.icon1);
+        String name = "flag_" + a.toLowerCase();
+        int id = context.getResources().getIdentifier(name, "mipmap", context.getPackageName());
+        icon1.setImageResource(id);
+
+        ImageView icon2 = (ImageView) child.findViewById(R.id.icon2);
+        name = "flag_" + b.toLowerCase();
+        id = context.getResources().getIdentifier(name, "mipmap", context.getPackageName());
+        icon2.setImageResource(id);
     }
 
-    public void delSetOnClick(final Button btn, final PairData el){
+    private void delSetOnClick(final Button btn, final PairData el){
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -43,13 +60,119 @@ public class DataManager {
         });
     }
 
-    public void alertClick(final Button bm, final PairData el) {
+    private void alertClick(final Button bm, final PairData el, double alarmRate) {
+        el.alarmRate = alarmRate;
+
+        toggleButton(bm, el, alarmRate == 0 ? 1 : 2);
+
         bm.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(toggleButton(bm, el, 3 - (int)bm.getTag()))  // TODO TOGGLE ONLY ON OK
+                    return;
 
+                final Dialog dialog = new Dialog(context);
+                dialog.setContentView(R.layout.add_alert);
+                dialog.setTitle("Select notification value:");
+
+                final EditText rate = (EditText)dialog.findViewById(R.id.rateAlert);  //TODO ADD ONTEXTCHANGED SHOWINDIALOG AND DISPLAY
+                rate.setText(showInDialog("" + el.rate));
+
+                final double cRate = el.rate;
+
+                Button more = (Button) dialog.findViewById(R.id.higherAlert);
+                more.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        double newRate = Double.parseDouble(rate.getText().toString()) + cRate / CHANGE_RATE;
+                        rate.setText(showInDialog("" + newRate));
+                    }
+                });
+                Button less = (Button) dialog.findViewById(R.id.lowerAlert);
+                less.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        double newRate = Double.parseDouble(rate.getText().toString()) - cRate / CHANGE_RATE;
+                        rate.setText(showInDialog("" + newRate));
+                    }
+                });
+
+                Button okButton = (Button) dialog.findViewById(R.id.alertAdd);
+                okButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        String r = rate.getText().toString();
+                        for(int i = 0, nr = 0; i < r.length(); ++i) {
+                            if(r.charAt(i) == '.') {
+                                ++nr;
+                                if(nr > 1) {
+                                    // TODO ALERT  WRONG FORMAT
+                                }
+                                continue;
+                            }
+
+                            if(!Character.isDigit(r.charAt(i))) {
+                                // TODO ALERT  WRONG FORMAT
+                            }
+                        }
+
+                        el.alarmRate = Double.parseDouble(r);
+                        if(el.alarmRate < el.rate)
+                            el.alarmRate = -el.alarmRate;
+
+                        addAlert();
+                        dialog.dismiss();
+                    }
+                });
+
+                Button cancelButton = (Button)dialog.findViewById(R.id.alertCancel);
+                cancelButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        toggleButton(bm, el, 3 - (int)bm.getTag());
+                        dialog.dismiss();
+                    }
+                });
+
+                dialog.show();
             }
         });
+    }
+
+    private boolean toggleButton(Button bm, PairData el, int toggle) {
+        bm.setTag(toggle);
+        if(toggle == 1) {
+            cancelAlert(el);
+            bm.setBackgroundResource(R.mipmap.ic_alert);
+
+            return true;
+        }
+        else
+            bm.setBackgroundResource(R.mipmap.ic_launcher); // TODO CLOSE ALARM DRAWABLE
+        return false;
+    }
+
+    private void addAlert() {
+        if(alarmService == null)
+            alarmService = new AlarmService();
+        alarmService.setAlarm(context);
+    }
+
+    private void cancelAlert(PairData el) {
+        if(alarmService == null)
+            return;
+
+        el.alarmRate = 0;
+        for(int i = 0; i < x.size(); ++i) if(x.get(i).alarmRate != 0)
+            return;
+
+        alarmService.cancelAlarm(context);
+    }
+
+    private String showInDialog(String a) {
+        a = a + "0000000";
+        return a.substring(0, Math.min(a.length(), 9));
     }
 
     public int size() {

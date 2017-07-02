@@ -26,8 +26,16 @@
 
             </android.support.v7.widget.Toolbar>
 
-    </android.support.design.widget.AppBarLayout>
+        <TextView android:id="@+id/lastUpdatedTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:text="Last Updated:"
+            android:background="#0a0f30"
+            android:gravity="right"/>
 
+
+    </android.support.design.widget.AppBarLayout>
     <include layout="@layout/content_currency_rates" />
 
     <android.support.design.widget.FloatingActionButton

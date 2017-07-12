@@ -12,7 +12,7 @@ public class AlarmService extends WakefulBroadcastReceiver {
     private AlarmManager alarmMgr;
     private PendingIntent alarmIntent;
 
-    static int ALARM_INTERVAL = 1000 * 10; // 1000 * 60 * 60 * 2;
+    static int ALARM_INTERVAL = 1000 * 60 * 60 * 2; // 1000 * 60 * 60 * 2;
 
     @Override
     public void onReceive(Context context, Intent intent) {

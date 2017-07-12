@@ -2,6 +2,7 @@ package boss.currencyalarm;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewManager;
@@ -9,12 +10,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class DataManager {
     ArrayList<PairData> x = new ArrayList<>();
-    private LinearLayout content;
+    public LinearLayout content;
     public Context context;
 
     private AlarmService alarmService;
@@ -62,20 +64,27 @@ public class DataManager {
 
     private void alertClick(final Button bm, final PairData el, double alarmRate) {
         el.alarmRate = alarmRate;
+        if(Math.abs(alarmRate) > 0.0000001)
+            addAlert();
 
         toggleButton(bm, el, alarmRate == 0 ? 1 : 2);
 
         bm.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(toggleButton(bm, el, 3 - (int)bm.getTag()))  // TODO TOGGLE ONLY ON OK
+                if((int)bm.getTag() == 2) {
+                    toggleButton(bm, el, 1);
                     return;
+                }
 
                 final Dialog dialog = new Dialog(context);
                 dialog.setContentView(R.layout.add_alert);
                 dialog.setTitle("Select notification value:");
 
-                final EditText rate = (EditText)dialog.findViewById(R.id.rateAlert);  //TODO ADD ONTEXTCHANGED SHOWINDIALOG AND DISPLAY
+                TextView dialogTitle = (TextView)dialog.findViewById(R.id.addAlertTitle);
+                dialogTitle.setText("Add alert for " + el.el1 + " - " + el.el2);
+
+                final EditText rate = (EditText)dialog.findViewById(R.id.rateAlert);
                 rate.setText(showInDialog("" + el.rate));
 
                 final double cRate = el.rate;
@@ -101,25 +110,32 @@ public class DataManager {
                 okButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                         String r = rate.getText().toString();
                         for(int i = 0, nr = 0; i < r.length(); ++i) {
                             if(r.charAt(i) == '.') {
                                 ++nr;
                                 if(nr > 1) {
-                                    // TODO ALERT  WRONG FORMAT
+                                    Snackbar.make(content, "Wrong rate format!", Snackbar.LENGTH_LONG)
+                                            .setAction("Action", null).show();
+
+                                    dialog.dismiss();
+                                    return;
                                 }
                                 continue;
                             }
 
                             if(!Character.isDigit(r.charAt(i))) {
-                                // TODO ALERT  WRONG FORMAT
+                                Snackbar.make(content, "Wrong rate format!", Snackbar.LENGTH_LONG)
+                                        .setAction("Action", null).show();
+
+                                dialog.dismiss();
+                                return;
                             }
                         }
 
-                        el.alarmRate = Double.parseDouble(r);
-                        if(el.alarmRate < el.rate)
-                            el.alarmRate = -el.alarmRate;
+                        toggleButton(bm, el, 2);
+
+                        el.setAlarmRate(Double.parseDouble(r));
 
                         addAlert();
                         dialog.dismiss();
@@ -130,7 +146,6 @@ public class DataManager {
                 cancelButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        toggleButton(bm, el, 3 - (int)bm.getTag());
                         dialog.dismiss();
                     }
                 });
@@ -149,7 +164,7 @@ public class DataManager {
             return true;
         }
         else
-            bm.setBackgroundResource(R.mipmap.ic_launcher); // TODO CLOSE ALARM DRAWABLE
+            bm.setBackgroundResource(R.mipmap.ic_cancel_alarm);
         return false;
     }
 
@@ -163,7 +178,7 @@ public class DataManager {
         if(alarmService == null)
             return;
 
-        el.alarmRate = 0;
+        el.setAlarmRate(0.0);
         for(int i = 0; i < x.size(); ++i) if(x.get(i).alarmRate != 0)
             return;
 

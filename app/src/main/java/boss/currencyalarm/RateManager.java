@@ -2,7 +2,7 @@ package boss.currencyalarm;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
+import android.support.design.widget.Snackbar;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -20,6 +20,7 @@ public class RateManager {
     private Map<String, Double> rates = new TreeMap<>();
     private long lastUpdated;
     private int UI = 1;
+    public boolean hasData = false;
     private DataManager pairData;
     SchedulingService service;
 
@@ -87,7 +88,9 @@ public class RateManager {
                 connection.disconnect();
 
             } catch(Exception e){
-                Log.e("download ER:", e.toString());
+                Snackbar.make(pairData.content, "Network Error!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return "er";
             }
 
             return response;
@@ -106,6 +109,12 @@ public class RateManager {
 
         @Override
         protected void onPostExecute(String response) {
+            if(response.equals("er")) {
+                Snackbar.make(pairData.content, "Network Error!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return;
+            }
+
             updateStoredRates(response);
 
             if(UI == 1)
@@ -140,14 +149,7 @@ public class RateManager {
     }
 
     private void updateStoredRates(String response) {
-        if(response.equals("er")) {
-            // error message
-            return;
-        }
-
         int pos = 0;
-
-        Log.e("aaa", response);
 
         for(int i = 1; i < CurrencyRates.currency.size() - 1; ++i) {
             String cu = "";

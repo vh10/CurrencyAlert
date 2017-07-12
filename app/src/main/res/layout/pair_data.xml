@@ -4,6 +4,11 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@android:color/white"/>
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -14,19 +19,30 @@
         android:layout_height="40dp"
         android:src="@mipmap/ic_launcher"/>
     <TextView
-        android:id="@+id/pairData"
+    android:id="@+id/pairData"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerHorizontal="true"
+    android:gravity="center"
+    android:text="Loading..."
+    android:textSize="13sp"
+    android:layout_alignParentTop="true"
+    android:layout_toLeftOf="@+id/icon2"
+    android:layout_toRightOf="@+id/icon1"
+    android:layout_toEndOf="@+id/icon1"
+        android:layout_above="@+id/alarmData" />
+
+    <TextView
+        android:id="@+id/alarmData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
         android:gravity="center"
-        android:text="Loading..."
-        android:textSize="13sp"
-        android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@+id/icon2"
-        android:layout_alignBottom="@+id/icon2"
+        android:text=""
+        android:textSize="9sp"
+        android:layout_alignBottom="@+id/icon1"
         android:layout_toRightOf="@+id/icon1"
-        android:layout_toEndOf="@+id/icon1" />
+        android:layout_toEndOf="@+id/icon1"
+        android:layout_toLeftOf="@+id/icon2"/>
 
     <ImageView
         android:id="@+id/icon2"

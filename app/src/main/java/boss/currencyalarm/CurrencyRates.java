@@ -2,9 +2,11 @@ package boss.currencyalarm;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -15,6 +17,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -28,6 +31,9 @@ import static boss.currencyalarm.R.id.fab;
 
 public class CurrencyRates extends AppCompatActivity {
 
+    private static final int RESULT_SETTINGS = 1;
+    private static final String APP_VERSION = "1.0";
+
     final Context context = this;
 
     // Used to load the 'native-lib' library on application startup.
@@ -40,10 +46,6 @@ public class CurrencyRates extends AppCompatActivity {
 
     static ArrayList<String> currency =  new ArrayList<>(Arrays.asList("USD", "EUR", "AUD", "CAD", "CHF", "CNH", "CZK", "DKK", "GBP", "HKD",
             "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SEK", "TRY", "ZAR"));
-
-    static String[] longCurrency = {"USD", "AUD", "EUR", "GBP", "INR", "RON", "RUB", "ZC", "XAU", "NG", "CL",
-            "XPD", "XPT", "XAG", "NZD", "CAD", "CHF", "JPY", "MXN", "PLN", "SGD", "TRY", "DKK",
-            "HKD", "NOK", "SEK", "CNH", "CZK", "HUF", "ZAR"};
 
     Spinner currency1, currency2;
     LinearLayout content;
@@ -59,7 +61,7 @@ public class CurrencyRates extends AppCompatActivity {
         pairData = new DataManager(context, content);
         rateManager = new RateManager(pairData);
 
-        Button refreshButton = (Button) findViewById(R.id.button_refresh);
+        ImageButton refreshButton = (ImageButton) findViewById(R.id.button_refresh);
         refreshButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -106,9 +108,16 @@ public class CurrencyRates extends AppCompatActivity {
         });
 
         restoreSavedData();
+
+        if(pairData.size() == 0)
+            pairData.add("EUR", "USD", 0);
     }
 
     private void restoreSavedData() {
+        String version = getSharedPreferences("boss", MODE_PRIVATE).getString("AppVersion", "0.0");
+        if(!version.equals(APP_VERSION))
+            return;
+
         String csvList = getSharedPreferences("boss", MODE_PRIVATE).getString("myList", "boss");
         if(csvList.equals("boss"))
             return;
@@ -123,7 +132,7 @@ public class CurrencyRates extends AppCompatActivity {
     }
 
     @Override
-    public void onPause() {  // TODO ADD ALARM RATES TO SAVED DATA
+    public void onPause() {
         super.onPause();
 
         if(pairData.size() == 0)
@@ -144,6 +153,7 @@ public class CurrencyRates extends AppCompatActivity {
 
         SharedPreferences.Editor editor = getSharedPreferences("boss", MODE_PRIVATE).edit();
         editor.putString("myList", csvList.toString());
+        editor.putString("AppVersion", APP_VERSION);
         editor.commit();
     }
 
@@ -186,12 +196,14 @@ public class CurrencyRates extends AppCompatActivity {
 
     private void addNewCurrency(String n1, String n2) {
         if(n1.equals(n2)) {
-            // TODO message
+            Snackbar.make(findViewById(R.id.content), "Pairs must be distinct!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
             return;
         }
         for(PairData i : pairData.x) {
             if(i.el1.equals(n1) && i.el2.equals(n2)) {
-                //TODO MESSAGE
+                Snackbar.make(findViewById(R.id.content), "Pair already added!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
                 return;
             }
         }
@@ -216,10 +228,21 @@ public class CurrencyRates extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            // TODO Settings button clicked
+            Intent i = new Intent(this, UserSettingActivity.class);
+            startActivityForResult(i, RESULT_SETTINGS);
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case RESULT_SETTINGS:
+                break;
+        }
     }
 
     /**

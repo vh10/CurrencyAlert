@@ -18,11 +18,12 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay" >
 
-            <Button
+            <ImageButton
                 android:id="@+id/button_refresh"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:text="Refresh" />
+                android:src="@mipmap/ic_refresh"
+                android:background="@mipmap/ic_refresh"/>
 
             </android.support.v7.widget.Toolbar>
 

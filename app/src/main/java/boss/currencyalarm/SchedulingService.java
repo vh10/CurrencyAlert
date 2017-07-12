@@ -5,8 +5,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -23,7 +28,6 @@ public class SchedulingService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.e("aa", "aa");
         restoreSavedData();
 
         AlarmService.completeWakefulIntent(intent);
@@ -39,19 +43,50 @@ public class SchedulingService extends IntentService {
         if(items.length == 0)
             return;
 
+        int i;
+        for(i = 0; i < items.length; i += 3) {
+            if(Math.abs(Double.parseDouble(items[i + 2])) >= 0.0000001)
+                break;
+        }
+        if(i >= items.length) {
+            AlarmService alarm = new AlarmService();
+            alarm.setAlarm(getApplicationContext());
+            alarm.cancelAlarm(getApplicationContext());
+            return;
+        }
+
         rateManager.updateRates(this);
     }
 
     void onUpdateCompleted() {
-        Log.w("onupdateCompleted " + Double.parseDouble(items[2]), "" + rateManager.getRate("USD", "EUR"));
-
-        for(int i=0; i < items.length; i += 3) {
+        for(int i=0; i < items.length; i += 3)
             checkRate(items[i], items[i + 1], Double.parseDouble(items[i + 2]));
-        }
 
         if(hitRates.size() > 0) {
-            sendNotification(hitRates.get(0) + " - " +  hitRates.get(1) + ", and " +
-                    hitRates.size() / 2 + " more have hit alarm rate.");
+            SharedPreferences sharedPrefs = PreferenceManager
+                    .getDefaultSharedPreferences(this);
+
+            if(sharedPrefs.getBoolean("prefNotificationVibration", true)) {
+                Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(500);
+            }
+
+            if(sharedPrefs.getBoolean("prefNotificationSound", true)) {
+                try {
+                    Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+                    r.play();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            String text = hitRates.get(0) + " - " +  hitRates.get(1) + ", and " +
+                    hitRates.size() / 2 + " more have hit alarm rate.";
+            if(hitRates.size() == 2)
+                text = hitRates.get(0) + " - " +  hitRates.get(1) + " hit alarm rate.";
+
+            sendNotification(text);
         }
     }
 
@@ -76,7 +111,7 @@ public class SchedulingService extends IntentService {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("boss")
+                        .setContentTitle("Currency rate alarm!")
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
                         .setContentText(msg);

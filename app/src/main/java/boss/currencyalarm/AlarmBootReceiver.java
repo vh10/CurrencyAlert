@@ -9,7 +9,7 @@ public class AlarmBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
-                //alert.setAlarm(context); TODO CHANGE THIIS
+                alert.setAlarm(context);
         }
     }
 }

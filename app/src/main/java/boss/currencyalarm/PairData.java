@@ -19,9 +19,22 @@ public class PairData {
 
     public void displayData() {
         TextView t = (TextView) data.findViewById(R.id.pairData);
-
         String r = "" + rate;
         r = r.substring(0, Math.min(r.length(), NR_ALERT_DIGITS));
         t.setText("1 " + el1 + " = " + r + " " + el2);
+
+        TextView alarmText = (TextView) data.findViewById(R.id.alarmData);
+        if(alarmRate != 0)
+            alarmText.setText("Alarm set to: " + Math.abs(alarmRate));
+        else
+            alarmText.setText("");
+    }
+
+    void setAlarmRate(Double al) {
+        alarmRate = al;
+        if(alarmRate < rate)
+            alarmRate = -alarmRate;
+
+        displayData();
     }
 }
